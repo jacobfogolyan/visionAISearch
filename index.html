@@ -9,18 +9,24 @@
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.0/js/bootstrap.min.js"></script>
 
   <script>
-  function processImage(imageBase64) {
+  function processImage(imgSource,image) {
     //imageUri = document.getElementById('imageUri').value;
     //document.getElementById('sourceImage').innerHTML = '<img src="'+imageUri+'" width="600">';
-    document.getElementById('json').innerHTML = "";
+    document.getElementById('json').innerHTML = "Google AI Thinking... Please wait.";
     document.getElementById('face').innerHTML = "";
     document.getElementById('products').innerHTML = "";
     document.getElementById('labels').innerHTML = "";
+    document.getElementById('objects').innerHTML = "";
 
-
-    var data = {
-      imageBase64: imageBase64,
-    };
+    var data = {};
+    if (imgSource=="base64") {
+      data.imageBase64 = image;
+    } else if (imgSource=="url") {
+      data.imageUri = image;
+      canvas.style = "display:none";
+      document.getElementById('imgThumb').src = image;
+      document.getElementById('imgThumb').style = "";
+    }
     var url = "https://asia-northeast1-pbug-1071.cloudfunctions.net/visionAiDetect";
     $.ajax({
           crossDomain: true,
@@ -43,10 +49,26 @@
               document.getElementById('face').innerHTML = faceHtml;
             }
             if (msg.hasOwnProperty('labelAnnotations')) {
-              var faceHtml = '<h1>Labels</h1><pre>'
-                           + JSON.stringify(msg.labelAnnotations,undefined,2) + '</pre>';
-              document.getElementById('labels').innerHTML = faceHtml;
+              var labelHtml = '<h1>Labels</h1>';
+              var label;
+              for (var l=0; l<msg.labelAnnotations.length;l++ ) {
+                label = msg.labelAnnotations[l];
+                labelHtml = labelHtml + label.description + " "+label.score.toFixed(2) + '<br>';
+              }
+              document.getElementById('labels').innerHTML = labelHtml;
             }
+
+            if (msg.hasOwnProperty('localizedObjectAnnotations')) {
+              var objectsHtml = '<h1>Objects</h1>';
+              var object;
+              for (var o=0; o<msg.localizedObjectAnnotations.length;o++ ) {
+                object = msg.localizedObjectAnnotations[o];
+                objectsHtml = objectsHtml + object.name + " "+object.score.toFixed(2) + '<br>';
+              }
+              document.getElementById('objects').innerHTML = objectsHtml;
+
+            }
+
             if (msg.hasOwnProperty('productSearchResults')) {
               var searchResultsHtml = '';
               var prodLabel, prodJSON;
@@ -137,32 +159,44 @@
   <div class="container"> 
   	<div class="row">
 	  	<div class="col-sm-6">
-	  		<div class="sizer">
+	  		<div class="sizer" style="text-align: right">
 			  <div class="embed-responsive embed-responsive-16by9">
 			    <video id="player" controls autoplay></video>
 			  </div>
+        <br>
+        <button id="capture" class="btn btn-danger">Vision AI With Camera</button>
+        <br>
+        <br>
+    <form class="form-inline">
+      <input type="imageUri" id="imageUri" class="form-control" size="30" placeholder="https://full.url.of.image">
+      <button type="submit" form="form1" value="Submit" onclick="processImage('url',document.getElementById('imageUri').value)" id="check-btn" class="btn btn-danger">Vision AI With Image Url</button>
+    </form>
 			</div>
 	  		
 	  	</div>
-	  	<div class="col-sm-6">
-			<button id="capture" class="btn btn-danger">Capture</button>
-			<canvas id="canvas" width=640 height=480></canvas>
-			<div>
-				<h1>Image Stats</h1>
-				<div id="base64"></div>
-			</div>
+	  	<div class="col-sm-6" id="imgPreview">
+			<canvas id="canvas" width=640 height=360 style="display:none"></canvas>
+      <img id="imgThumb" src="#" style="display:none">
 	  	</div>
   	</div>
+    <div class="row">
+      <div class="col-sm-4">
+        <div id="face" class="container"></div>
+      </div>
+      <div class="col-sm-4">
+        <div id="labels" class="container"></div>
+      </div>
+      <div class="col-sm-4">
+        <div id="objects" class="container"></div>
+      </div>
+    </div>
   	<div class="row">
-	  <div id="sourceImage" class="container"><br></div>
-	  <div id="face" class="container"></div>
-	  <div id="products" class="container"></div>
-	  <div id="labels" class="container"></div>
-	  <div id="safeSearch" class="container"></div>
-	  <div id="rawOutput" class="container">
-	    <pre id="json"></pre>
-	  </div>
-  		
+  	  <div id="sourceImage" class="container"><br></div>
+  	  <div id="products" class="container"></div>
+  	  <div id="safeSearch" class="container"></div>
+  	  <div id="rawOutput" class="container">
+  	    <pre id="json"></pre>
+  	  </div>
   	</div>
   </div>
 <script>
@@ -177,9 +211,11 @@
 
   captureButton.addEventListener('click', () => {
     // Draw the video frame to the canvas.
+    canvas.style = "";
+    document.getElementById('imgThumb').style = "display:none";
     context.drawImage(player, 0, 0, canvas.width, canvas.height);
     //document.getElementById('base64').innerHTML = canvas.toDataURL("image/png");
-    processImage(canvas.toDataURL("image/png").replace('data:image/png;base64,','')) 
+    processImage('base64',canvas.toDataURL("image/png").replace('data:image/png;base64,','')) 
   });
 
   // Attach the video stream to the video element and autoplay.
