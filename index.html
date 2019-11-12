@@ -12,13 +12,14 @@
   function processImage(imgSource,image) {
     //imageUri = document.getElementById('imageUri').value;
     //document.getElementById('sourceImage').innerHTML = '<img src="'+imageUri+'" width="600">';
-    document.getElementById('json').innerHTML = "Google AI Thinking... Please wait.";
-    document.getElementById('face').innerHTML = "";
-    document.getElementById('products').innerHTML = "";
+    document.getElementById('rawOutput').innerHTML = "";
+    document.getElementById('face').innerHTML = '';
+    document.getElementById('products').innerHTML = '<div  style="text-align: center">Google AI Thinking... one moment please. <br><br><img src="https://i.giphy.com/media/kPtv3UIPrv36cjxqLs/giphy.webp"></div>';
     document.getElementById('labels').innerHTML = "";
     document.getElementById('objects').innerHTML = "";
+    var mainCat = document.getElementById('mainCat').value;
+    var data = {mainCat:mainCat};
 
-    var data = {};
     if (imgSource=="base64") {
       data.imageBase64 = image;
     } else if (imgSource=="url") {
@@ -84,9 +85,9 @@
                   searchResultsHtml = searchResultsHtml + '<h1>Products'+prodLabel+'</h1><div id="recommendations" class="row">';
 
                     for (var j=0;j<prodJSON.length;j++) {
-                      searchResultsHtml = searchResultsHtml + '<div class="col-sm-4">' + prodJSON[j].product.displayName 
+                      searchResultsHtml = searchResultsHtml + '<div class="col-sm-4">' + prodJSON[j].title
                                                             + '<br> score: ' + prodJSON[j].score.toFixed(2)
-                                                            + '<br> <img src="' + prodJSON[j].uri + '">'
+                                                            + '<br> <img src="' + prodJSON[j].imageUri + '">'
                                                             + '</div>'
                     }
                                   //  + JSON.stringify(prodJSON,undefined,2) ;
@@ -104,7 +105,7 @@
 
 
 
-            document.getElementById('json').innerHTML = JSON.stringify(msg,undefined,2);
+            document.getElementById('rawOutput').innerHTML = '<pre>'+ JSON.stringify(msg,undefined,2) + '</pre>';
         /*    var transList = "";
             var trans = "";
             for (var i=0;i<msg.length;i++) {
@@ -157,6 +158,16 @@
     </div>
   </div>
   <div class="container"> 
+    <div>
+        <select name="mainCat" id="mainCat" class="form-control">
+          <option value="">All Categories</option>
+          <option value="womens">Womens</option>
+          <option value="mens">Mens</option>
+          <option value="kids">Kids</option>
+          <option value="baby">Baby</option>
+        </select>
+
+    </div>
   	<div class="row">
 	  	<div class="col-sm-6">
 	  		<div class="sizer" style="text-align: right">
@@ -164,7 +175,9 @@
 			    <video id="player" controls autoplay></video>
 			  </div>
         <br>
+      
         <button id="capture" class="btn btn-danger">Vision AI With Camera</button>
+      
         <br>
         <br>
     <form class="form-inline">
@@ -194,9 +207,7 @@
   	  <div id="sourceImage" class="container"><br></div>
   	  <div id="products" class="container"></div>
   	  <div id="safeSearch" class="container"></div>
-  	  <div id="rawOutput" class="container">
-  	    <pre id="json"></pre>
-  	  </div>
+  	  <div id="rawOutput" class="container"></div>
   	</div>
   </div>
 <script>
